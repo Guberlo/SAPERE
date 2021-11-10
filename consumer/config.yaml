@@ -1,0 +1,9 @@
+kafkaConfig:
+  brokers: 10.0.100.23:9092
+  generalTopic: requests
+  processTopic:
+    - processRequest
+    - processResponse
+elasticConfig:
+  host: 10.0.100.51
+  index: requests
