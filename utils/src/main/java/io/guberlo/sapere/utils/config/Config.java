@@ -1,16 +1,16 @@
-package io.guberlo.sapere.model;
+package io.guberlo.sapere.utils.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.guberlo.sapere.config.ElasticConfig;
-import io.guberlo.sapere.config.KafkaConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 
-public class Config {
+// TODO: THINK IF WE CAN AUTOMATICALLY Import. SHOULD IT BE A SINGLETON? SAME AS FOR OTHERS
+public class Config implements Serializable {
 
     private static final Logger LOG = LoggerFactory.getLogger(Config.class);
 

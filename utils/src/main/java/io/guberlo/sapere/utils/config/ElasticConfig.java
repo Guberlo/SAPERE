@@ -1,4 +1,4 @@
-package io.guberlo.sapere.config;
+package io.guberlo.sapere.utils.config;
 
 public class ElasticConfig {
     private String host;

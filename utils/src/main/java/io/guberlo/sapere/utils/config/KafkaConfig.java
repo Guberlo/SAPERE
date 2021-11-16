@@ -1,4 +1,4 @@
-package io.guberlo.sapere.config;
+package io.guberlo.sapere.utils.config;
 
 import java.util.List;
 
