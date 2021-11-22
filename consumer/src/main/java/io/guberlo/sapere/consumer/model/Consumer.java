@@ -1,13 +1,12 @@
-package io.guberlo.sapere.model;
+package io.guberlo.sapere.consumer.model;
 
+import io.guberlo.sapere.utils.kafka.KafkaUtils;
+import io.guberlo.sapere.utils.config.Config;
+import io.guberlo.sapere.utils.spark.SparkUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.streaming.StreamingQueryException;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.Metadata;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,21 +17,12 @@ public abstract class Consumer implements Serializable {
 
     private static final Logger LOG = LoggerFactory.getLogger(Consumer.class);
 
-    private transient Config config;
+    protected transient Config config;
+    private transient KafkaUtils kafkaUtils;
+    protected transient SparkUtils sparkUtils;
     private String configPath;
     protected String label;
 
-    private StructType inputSchema = new StructType(new StructField[] {
-            new StructField("id", DataTypes.StringType, false, Metadata.empty()),
-            new StructField("text", DataTypes.StringType, false, Metadata.empty())
-    });
-
-    private StructType outputSchema = new StructType(new StructField[] {
-            new StructField("id", DataTypes.StringType, false, Metadata.empty()),
-            new StructField("type", DataTypes.StringType, false, Metadata.empty()),
-            new StructField("text", DataTypes.StringType, false, Metadata.empty()),
-            new StructField("prediction", DataTypes.StringType, false, Metadata.empty())
-    });
 
     public Consumer() {
     }
@@ -42,52 +32,8 @@ public abstract class Consumer implements Serializable {
         this.configPath = configPath;
         this.config = new Config().getYaml(configPath);
         this.label = label;
-    }
-
-    /**
-     * Read data stream from kafka into a DataFrame.
-     *
-     * @return Request dataset
-     */
-    public Dataset<Row> readStreamKafka() {
-        SparkSession session = SparkSession.builder()
-                .appName("Consumer")
-                .getOrCreate();
-        session.sparkContext().setLogLevel("WARN");
-
-        return session.readStream()
-                .format("kafka")
-                .option("kafka.bootstrap.servers", this.config.getKafkaConfig().getBrokers())
-                .option("startingOffsets", "earliest")
-                .option("subscribe", this.config.getKafkaConfig().getGeneralTopic())
-                .load();
-    }
-
-    public void writeToConsole(Dataset<Row> dataset) throws StreamingQueryException, TimeoutException {
-        dataset.selectExpr("CAST(value AS STRING)")
-                .writeStream()
-                .format("console")
-                .start()
-                .awaitTermination();
-    }
-
-    /**
-     * Send the request to the 'processRequest' topic.
-     * Consumers will then pick up requests from this topic.
-     *
-     * @param dataset: DataFrame must have columns | id | |text|.
-     * @param topic: str Kafka topic where to send data.
-     * @param broker: str Kafka brokers.
-     * @throws TimeoutException
-     */
-    public void writeStreamKafka(Dataset<Row> dataset, String topic, String broker) throws TimeoutException {
-        dataset.select(functions.to_json(functions.struct("id", "text")).alias("value"))
-                .writeStream()
-                .format("kafka")
-                .option("kafka.bootstrap.servers", broker)
-                .option("topic", topic)
-                .option("checkpointLocation", "/tmp/kafka/checkpoint")
-                .start();
+        kafkaUtils = new KafkaUtils();
+        sparkUtils = new SparkUtils("english");
     }
 
     /**
@@ -97,21 +43,21 @@ public abstract class Consumer implements Serializable {
      * @param dataset Mini batch dataframe with id | text as columns.
      * @param datasetId The id of the mini batch dataframe.
      */
-    public void elaborate(Dataset<Row> dataset, Long datasetId) {
+    public void elaborate(Dataset<Row> dataset, Long datasetId) throws StreamingQueryException, TimeoutException {
         SparkSession session = SparkSession.builder().getOrCreate();
         session.sparkContext().setLogLevel("WARN");
 
         String outputTopic = config.getKafkaConfig().getProcessTopic().get(1);
         String broker = config.getKafkaConfig().getBrokers();
 
-        JavaRDD<Row> rdd = dataset.javaRDD().map(row -> predict(row));
+        JavaRDD<Row> rdd = dataset.javaRDD().map(this::predict);
 
         if(rdd.isEmpty()) {
-            System.out.println("********* RDD EMPTY *********");
+            LOG.info("********* RDD EMPTY *********");
             return;
         }
 
-        Dataset<Row> output = session.createDataFrame(rdd, outputSchema);
+        Dataset<Row> output = session.createDataFrame(rdd, sparkUtils.getOutputSchema());
         output.select(functions.to_json(functions.struct("id", "type", "text", "prediction")).alias("value"))
                 .write()
                 .format("kafka")
@@ -131,7 +77,7 @@ public abstract class Consumer implements Serializable {
      */
     public void foreachPredict(Dataset<Row> dataset) throws TimeoutException, StreamingQueryException {
         dataset.selectExpr("CAST(value AS STRING)")
-                .select(functions.from_json(new Column("value"), inputSchema).alias("data"))
+                .select(functions.from_json(new Column("value"), sparkUtils.getInputSchema()).alias("data"))
                 .select("data.*")
                 .writeStream()
                 .foreachBatch((VoidFunction2<Dataset<Row>, Long>) this::elaborate)
@@ -169,7 +115,10 @@ public abstract class Consumer implements Serializable {
      * @throws StreamingQueryException
      */
     public void start() throws TimeoutException, StreamingQueryException {
-        Dataset<Row> dataset = readStreamKafka();
+        String topic = config.getKafkaConfig().getGeneralTopic();
+        String brokers = config.getKafkaConfig().getBrokers();
+
+        Dataset<Row> dataset = kafkaUtils.readKafkaStream(topic, brokers);
         foreachPredict(dataset);
     }
 
@@ -187,22 +136,6 @@ public abstract class Consumer implements Serializable {
 
     public void setConfigPath(String configPath) {
         this.configPath = configPath;
-    }
-
-    public StructType getInputSchema() {
-        return inputSchema;
-    }
-
-    public void setInputSchema(StructType inputSchema) {
-        this.inputSchema = inputSchema;
-    }
-
-    public StructType getOutputSchema() {
-        return outputSchema;
-    }
-
-    public void setOutputSchema(StructType outputSchema) {
-        this.outputSchema = outputSchema;
     }
 
 }

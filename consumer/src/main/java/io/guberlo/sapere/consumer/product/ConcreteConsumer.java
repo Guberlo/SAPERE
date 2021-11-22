@@ -1,6 +1,6 @@
-package io.guberlo.sapere.product;
+package io.guberlo.sapere.consumer.product;
 
-import io.guberlo.sapere.model.Consumer;
+import io.guberlo.sapere.consumer.model.Consumer;
 import org.apache.spark.sql.Row;
 
 public class ConcreteConsumer extends Consumer {
