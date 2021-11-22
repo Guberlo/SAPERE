@@ -31,7 +31,7 @@ public class Dispatcher {
         config = new Config().getYaml(configPath);
         kafkaUtils = new KafkaUtils();
         sparkUtils = new SparkUtils(lang);
-        elasticUtils = new ElasticUtils(config);
+        elasticUtils = new ElasticUtils(config.getElasticConfig().getIndex(), config.getElasticConfig().getHost());
         broker = config.getKafkaConfig().getBrokers();
         topic = config.getKafkaConfig().getGeneralTopic();
         processTopic = config.getKafkaConfig().getProcessTopic();
