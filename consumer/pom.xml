@@ -4,12 +4,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>SAPERE</artifactId>
-        <groupId>io.guberlo</groupId>
+        <groupId>io.guberlo.sapere</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>consumer</artifactId>
+
+    <repositories>
+        <repository>
+            <id>archiva.internal</id>
+            <url>https://maven.neodatagroup.com/repository/internal</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
@@ -48,11 +55,23 @@
             <artifactId>spark-sql-kafka-0-10_2.12</artifactId>
             <version>3.1.1</version>
         </dependency>
+        <dependency>
+            <groupId>io.guberlo.sapere</groupId>
+            <artifactId>utils</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.neodatagroup</groupId>
+            <artifactId>jero-spark</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
 </project>
