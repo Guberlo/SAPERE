@@ -56,12 +56,11 @@ public class SparkUtils {
         return outputSchema;
     }
 
-    public void writeToConsole(Dataset<Row> dataset) throws StreamingQueryException, TimeoutException {
-        dataset.selectExpr("CAST(value AS STRING)")
-                .writeStream()
+    public void writeToConsole(Dataset<Row> dataset) {
+        dataset.select("*")
+                .write()
                 .format("console")
-                .start()
-                .awaitTermination();
+                .save();
     }
 
     public Dataset<Row> tokenize(Dataset<Row> dataset) {
