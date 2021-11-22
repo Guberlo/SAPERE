@@ -32,7 +32,7 @@ public class KafkaUtils {
         return session.readStream()
                 .format("kafka")
                 .option("kafka.bootstrap.servers", brokers)
-                .option("startingOffsets", "earliest")
+                .option("startingOffsets", "latest")
                 .option("subscribe", topic)
                 .load();
     }
