@@ -13,7 +13,6 @@ RUN rm -f spark-3.1.1-bin-hadoop2.7.tgz
 # Add FAT jar and config files
 ARG JAR_DIR=dispatcher
 COPY out/artifacts/${JAR_DIR}/* app/
-COPY out/artifacts/utils.jar app/
 COPY config.yaml app/config.yaml
 COPY src/main/resources/log4j.properties ${SPARK_DIR}/conf/log4j.properties
 
@@ -24,5 +23,4 @@ ENTRYPOINT [ "./bin/spark-submit", \
             "--conf", "spark.driver.extraJavaOptions=-Dlog4j.configuration=file:/opt/spark-3.1.1-bin-hadoop2.7/conf/log4j.properties", \
             "--conf", "spark.executor.extraJavaOptions=-Dlog4j.configuration=file:/opt/spark-3.1.1-bin-hadoop2.7/conf/log4j.properties", \
             "--files", "/opt/spark-3.1.1-bin-hadoop2.7/conf/log4j.properties", \
-            "--jars", "/opt/app/utils.jar", \
             "/opt/app/dispatcher.jar" ]
