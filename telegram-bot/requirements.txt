@@ -1,0 +1,4 @@
+python-telegram-bot
+confuse
+elasticsearch < 7.14
+confluent-kafka

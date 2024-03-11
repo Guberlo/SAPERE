@@ -1,0 +1,20 @@
+appName: sapere-bot
+logLevel: WARN
+
+bot:
+  token: 6273449083:AAF5nOB3QhlftBgT8y1k2SViTB9Dd8BIozQ
+
+common:
+  noLinkMessage:
+  errorMessage: 
+  notFoundMessage:
+
+elasticsearch:
+  host: 10.0.100.51
+  port: 9200
+  index: requests 
+
+kafka:
+  host: 10.0.100.23
+  port: 9092
+  topic: requests
