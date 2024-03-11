@@ -1,0 +1,7 @@
+POST http://localhost:5001/predict
+Content-Type: application/json
+
+{
+    "type": "sentiment",
+    "text": "As he entered the church he could hear the soft voice of someone whispering into a cell phone."
+}
