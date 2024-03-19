@@ -2,18 +2,12 @@ appName: sapere-bot
 logLevel: WARN
 
 bot:
-  token: TOKEN
-
-common:
-  noLinkMessage:
-  errorMessage: 
-  notFoundMessage:
+  token: SECRET_TOKEN
 
 elasticsearch:
   host: 10.0.100.51
   port: 9200
   index: requests
-  mapping: 
 
 kafka:
   host: 10.0.100.23
