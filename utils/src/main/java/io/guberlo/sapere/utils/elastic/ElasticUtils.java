@@ -11,6 +11,8 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.RestStatus;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,52 +105,66 @@ public class ElasticUtils implements Serializable {
 
     public String readMappingV2() {
         return "{\n" +
-                "    \"properties\": {\n" +
-                "      \"text\": {\n" +
-                "        \"type\": \"keyword\"\n" +
-                "      },\n" +
-                "      \"predictions\": {\n" +
+                "  \"properties\": {\n" +
+                "    \"text\": {\n" +
+                "      \"type\": \"keyword\"\n" +
+                "    },\n" +
+                "    \"predictions\": {\n" +
+                "      \"type\": \"nested\",\n" +
+                "      \"properties\": {\n" +
+                "        \"NER\": {\n" +
+                "          \"type\": \"nested\",\n" +
+                "            \"properties\": {\n" +
+                "               \"entities\": {\n" +
+                "               \"type\": \"nested\",\n" +
+                "                   \"properties\": {\n" +
+                "                       \"name\": {\n" +
+                "                           \"type\": \"text\",\n" +
+                "                           \"analyzer\": \"keyword\"\n" +
+                "                       },\n" +
+                "                       \"label\": {\n" +
+                "                           \"type\": \"text\",\n" +
+                "                           \"analyzer\": \"keyword\"\n" +
+                "                       }\n" +
+                "                   }\n" +
+                "               }\n" +
+                "          }\n" +
+                "        },\n" +
+                "        \"alg2\": {\n" +
+                "          \"type\": \"keyword\"\n" +
+                "        },\n" +
+                "        \"alg3\": {\n" +
+                "          \"type\": \"keyword\"\n" +
+                "        },\n" +
+                "        \"gero\": {\n" +
                 "          \"type\": \"nested\",\n" +
                 "          \"properties\": {\n" +
-                "            \"alg1\": {\n" +
-                "                \"type\": \"keyword\"\n" +
-                "              },\n" +
-                "              \"alg2\": {\n" +
-                "                \"type\": \"keyword\"\n" +
-                "              },\n" +
-                "              \"alg3\": {\n" +
-                "                \"type\": \"keyword\"\n" +
-                "              },\n" +
-                "              \"gero\": {\n" +
-                "                \"type\": \"nested\",\n" +
-                "                \"properties\": {\n" +
-                "                  \"start\": {\n" +
-                "                    \"type\": \"integer\"\n" +
-                "                  },\n" +
-                "                  \"end\": {\n" +
-                "                    \"type\": \"integer\"\n" +
-                "                  },\n" +
-                "                  \"mention\": {\n" +
-                "                    \"type\": \"keyword\"\n" +
-                "                  },\n" +
-                "                  \"entity_id\": {\n" +
-                "                    \"type\": \"integer\"\n" +
-                "                  },\n" +
-                "                  \"entity_name\": {\n" +
-                "                    \"type\": \"keyword\"\n" +
-                "                  },\n" +
-                "                  \"entity_type\": {\n" +
-                "                    \"type\": \"keyword\"\n" +
-                "                  },\n" +
-                "                  \"rho\": {\n" +
-                "                    \"type\": \"double\"\n" +
-                "                  },\n" +
-                "                  \"confidence\": {\n" +
-                "                    \"type\": \"double\"\n" +
-                "                  }\n" +
-                "                }\n" +
-                "              }\n" +
+                "            \"start\": {\n" +
+                "              \"type\": \"integer\"\n" +
+                "            },\n" +
+                "            \"end\": {\n" +
+                "              \"type\": \"integer\"\n" +
+                "            },\n" +
+                "            \"mention\": {\n" +
+                "              \"type\": \"keyword\"\n" +
+                "            },\n" +
+                "            \"entity_id\": {\n" +
+                "              \"type\": \"integer\"\n" +
+                "            },\n" +
+                "            \"entity_name\": {\n" +
+                "              \"type\": \"keyword\"\n" +
+                "            },\n" +
+                "            \"entity_type\": {\n" +
+                "              \"type\": \"keyword\"\n" +
+                "            },\n" +
+                "            \"rho\": {\n" +
+                "              \"type\": \"double\"\n" +
+                "            },\n" +
+                "            \"confidence\": {\n" +
+                "              \"type\": \"double\"\n" +
+                "            }\n" +
                 "          }\n" +
+                "        }\n" +
                 "      }\n" +
                 "    }\n" +
                 "  }\n" +
@@ -168,14 +184,24 @@ public class ElasticUtils implements Serializable {
             String type = row.getAs("type");
             String prediction = row.getAs("prediction");
             LOG.warn(prediction);
+            String body;
 
             UpdateRequest request = new UpdateRequest(index, id);
-            String body = "{" +
-                    "\"predictions\": {" +
+            if (isJSON(prediction)){
+                body = "{" +
+                        "\"predictions\": {" +
                         "\"" + type + "\":" +
                         prediction +
-                    "}" +
-                    "}";
+                        "}" +
+                        "}";
+            } else {
+                body = "{" +
+                        "\"predictions\": {" +
+                        "\"" + type + "\":" +
+                        "\"" + prediction + "\"" +
+                        "}" +
+                        "}";
+            }
 
             LOG.warn(body);
 
@@ -193,5 +219,14 @@ public class ElasticUtils implements Serializable {
                 LOG.error("Request body is: {}", body);
             }
         });
+    }
+
+    private Boolean isJSON(String prediction) {
+        try {
+            new JSONObject(prediction);
+        } catch (JSONException e) {
+            return false;
+        }
+        return true;
     }
 }
