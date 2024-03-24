@@ -18,7 +18,7 @@ public abstract class Consumer implements Serializable {
     private static final Logger LOG = LoggerFactory.getLogger(Consumer.class);
 
     protected transient Config config;
-    private transient KafkaUtils kafkaUtils;
+    protected transient KafkaUtils kafkaUtils;
     protected transient SparkUtils sparkUtils;
     private String configPath;
     protected String label;

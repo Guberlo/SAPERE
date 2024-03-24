@@ -11,6 +11,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.RestStatus;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -111,21 +112,25 @@ public class ElasticUtils implements Serializable {
                 "    \"predictions\": {\n" +
                 "      \"type\": \"nested\",\n" +
                 "      \"properties\": {\n" +
-                "        \"NER\": {\n" +
+                "        \"SpacyNER\": {\n" +
                 "          \"type\": \"nested\",\n" +
                 "            \"properties\": {\n" +
-                "               \"entities\": {\n" +
-                "               \"type\": \"nested\",\n" +
-                "                   \"properties\": {\n" +
-                "                       \"name\": {\n" +
-                "                           \"type\": \"text\",\n" +
-                "                           \"analyzer\": \"keyword\"\n" +
-                "                       },\n" +
-                "                       \"label\": {\n" +
-                "                           \"type\": \"text\",\n" +
-                "                           \"analyzer\": \"keyword\"\n" +
-                "                       }\n" +
-                "                   }\n" +
+                "              \"name\": {\n" +
+                "                 \"type\": \"text\"\n" +
+                "                },\n" +
+                "              \"label\": {\n" +
+                "                 \"type\": \"text\"\n" +
+                "               }\n" +
+                "          }\n" +
+                "        },\n" +
+                "        \"OpenNER\": {\n" +
+                "          \"type\": \"nested\",\n" +
+                "            \"properties\": {\n" +
+                "              \"name\": {\n" +
+                "                 \"type\": \"text\"\n" +
+                "                },\n" +
+                "              \"label\": {\n" +
+                "                 \"type\": \"text\"\n" +
                 "               }\n" +
                 "          }\n" +
                 "        },\n" +
@@ -224,7 +229,11 @@ public class ElasticUtils implements Serializable {
         try {
             new JSONObject(prediction);
         } catch (JSONException e) {
-            return false;
+            try {
+                new JSONArray(prediction);
+            } catch (JSONException ne) {
+                return false;
+            }
         }
         return true;
     }
